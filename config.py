@@ -1,0 +1,35 @@
+"""App settings and known Indian news domains."""
+
+MAX_ARTICLES = 6
+
+INDIAN_DOMAINS = {
+    "thehindu.com",
+    "indianexpress.com",
+    "timesofindia.indiatimes.com",
+    "indiatimes.com",
+    "ndtv.com",
+    "hindustantimes.com",
+    "indiatoday.in",
+    "theprint.in",
+    "deccanherald.com",
+    "deccanchronicle.com",
+    "news18.com",
+    "livemint.com",
+    "scroll.in",
+    "thewire.in",
+    "business-standard.com",
+    "economictimes.indiatimes.com",
+    "telegraphindia.com",
+    "tribuneindia.com",
+    "firstpost.com",
+    "rediff.com",
+    "newindianexpress.com",
+    "thehindubusinessline.com",
+    "aninews.in",
+    "ptinews.com",
+    "mid-day.com",
+    "outlookindia.com",
+    "pib.gov.in",
+    "oneindia.com",
+    "abplive.com",
+}

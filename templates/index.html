@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F3EBDD">
+  <title>Behaviour Coordination Indicators</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="masthead">
+      <p class="eyebrow">A small news-pattern reader</p>
+      <h1>Behaviour Coordination Indicators</h1>
+      <p class="intro">Explore how recently published articles are timed and worded. This tool describes patterns, never the truth of a claim.</p>
+    </header>
+
+    <form class="search-row" id="search-form">
+      <label class="visually-hidden" for="query">News claim or keyword</label>
+      <input id="query" name="query" type="search" placeholder="Try a claim or keyword" autocomplete="off" required>
+      <button class="button-primary" type="submit">Analyse</button>
+      <button class="button-secondary" id="demo-button" type="button">Use demo data</button>
+    </form>
+
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <section class="results" id="results" hidden aria-live="polite">
+      <div class="summary-card">
+        <div class="summary-topline">
+          <span class="demo-label" id="demo-label" hidden>DEMO DATA</span>
+          <span class="result-count" id="result-count"></span>
+        </div>
+        <h2 id="neutral-sentence"></h2>
+        <p class="window-note" id="window-note" hidden></p>
+        <p class="newest-age" id="newest-age"></p>
+        <p class="data-delay-note" id="data-delay-note" hidden></p>
+        <p class="source-list"><strong>Sources analysed:</strong> <span id="source-domains"></span></p>
+        <p class="india-note" id="india-note" hidden></p>
+        <p class="disclaimer" id="disclaimer"></p>
+      </div>
+
+      <div class="indicator-grid">
+        <article class="indicator-card">
+          <p class="card-kicker">01 / REGISTRATION</p>
+          <h3>Source age</h3>
+          <p class="sample-size" id="age-sample-size"></p>
+          <div class="chart" id="age-chart"></div>
+          <p class="caption">Registration records can give a rough sense of how long a domain has existed.</p>
+          <p class="calculation" id="age-calculation"></p>
+        </article>
+        <article class="indicator-card">
+          <p class="card-kicker">02 / PUBLISHING</p>
+          <h3>Posting time-of-day <span>(IST)</span></h3>
+          <p class="sample-size" id="hours-sample-size"></p>
+          <div class="chart hour-chart" id="hour-chart"></div>
+          <p class="caption">The bars show which local publishing hours appear in this set.</p>
+          <p class="calculation" id="hours-calculation"></p>
+        </article>
+        <article class="indicator-card">
+          <p class="card-kicker">03 / WORDING</p>
+          <h3>Identical text</h3>
+          <p class="sample-size" id="text-sample-size"></p>
+          <p class="big-stat" id="identical-stat"></p>
+          <p class="caption">Snippets are compared after lowercasing and removing punctuation. News agencies like ANI and PTI supply the same text to many outlets, so shared text alone does not mean coordination.</p>
+          <p class="calculation" id="text-calculation"></p>
+        </article>
+        <article class="indicator-card">
+          <p class="card-kicker">04 / TIMING</p>
+          <h3>Burst profile</h3>
+          <p class="sample-size" id="burst-sample-size"></p>
+          <p class="big-stat" id="burst-stat"></p>
+          <p class="caption">This is the largest group published within any rolling two-hour window.</p>
+          <p class="calculation" id="burst-calculation"></p>
+        </article>
+      </div>
+
+      <section class="evidence-section" aria-labelledby="evidence-title">
+        <div class="section-heading">
+          <div>
+            <p class="card-kicker">ARTICLE RECORD</p>
+            <h2 id="evidence-title">Evidence: the articles behind these numbers</h2>
+            <p class="section-explanation">These are the articles the numbers came from. Open any link to check.</p>
+          </div>
+          <div class="download-actions">
+            <button class="button-secondary" id="cross-check" type="button">Cross-check yourself</button>
+            <button class="button-secondary" id="download-json" type="button">Download evidence (JSON)</button>
+            <button class="button-secondary" id="download-csv" type="button">Download evidence (CSV)</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>No.</th><th>Source name</th><th>Domain</th><th>Origin</th><th>Headline</th><th>Published (IST)</th><th>Article</th><th>Snippet used</th></tr>
+            </thead>
+            <tbody id="evidence-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="search-details" aria-labelledby="search-details-title">
+        <h2 id="search-details-title">Search details</h2>
+        <p class="section-explanation">This is exactly what the tool asked the news service for.</p>
+        <dl id="search-details-list"></dl>
+      </section>
+      <details class="raw-response">
+        <summary>Raw API response</summary>
+        <p class="section-explanation">This is the unedited reply from the news service, shown as proof that the articles were not made up. Times are in UTC; add 5 hours 30 minutes for IST.</p>
+        <pre id="raw-response"></pre>
+      </details>
+      <footer class="page-footer" id="footer-note"></footer>
+    </section>
+  </main>
+</body>
+</html>
