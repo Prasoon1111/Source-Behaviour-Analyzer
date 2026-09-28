@@ -82,14 +82,12 @@ Indian-tagged results are ranked first, then other results fill the remaining pl
 | CSS | Existing page design and bar charts |
 | JavaScript | Search actions, result display, and evidence downloads |
 | python-dotenv | Loading `GNEWS_API_KEY` from a local `.env` file |
-| Vercel | Deployment routing is configured in `vercel.json`; the app is not necessarily deployed yet |
+| Vercel | Intended zero-configuration deployment using the root Flask app |
 
 ## Project structure
 
 ```text
 .
-├── api/
-│   └── index.py             Vercel entry point that imports the Flask app
 ├── static/
 │   ├── app.js               Search, rendering, cross-check, and downloads
 │   └── style.css            Page colors, layout, and chart styles
@@ -101,7 +99,6 @@ Indian-tagged results are ranked first, then other results fill the remaining pl
 ├── requirements.txt         Python package dependencies
 ├── .env.example             Environment variable name and placeholder
 ├── .gitignore               Local files excluded from Git
-└── vercel.json              Vercel function and route configuration
 ```
 
 The local `.env` file and `.venv/` environment are not included in this tree because they are private/local files.
