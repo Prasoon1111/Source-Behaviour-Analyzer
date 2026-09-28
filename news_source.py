@@ -2,6 +2,8 @@
 
 import os
 import re
+import logging
+import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
@@ -13,6 +15,83 @@ from config import INDIAN_DOMAINS, MAX_ARTICLES
 load_dotenv()
 
 GNEWS_SEARCH_URL = "https://gnews.io/api/v4/search"
+logger = logging.getLogger(__name__)
+
+
+class NewsSourceError(Exception):
+    """A safe-to-display GNews or network failure, with no API credentials."""
+
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+def safe_error_message(message, api_key):
+    """Remove credentials and API-key query parameters from provider text."""
+    message = str(message or "No error message provided.")
+    if api_key:
+        message = message.replace(api_key, "[redacted]")
+    message = re.sub(r"(?i)(apikey|api_key|api-key)=([^&\s]+)", r"\1=[redacted]", message)
+    return message[:500]
+
+
+def response_error_message(response, api_key):
+    """Read a useful error from GNews JSON or text without exposing secrets."""
+    try:
+        data = response.json()
+    except ValueError:
+        data = None
+
+    if isinstance(data, dict):
+        for key in ("message", "error", "errors"):
+            value = data.get(key)
+            if value:
+                if isinstance(value, (dict, list)):
+                    value = str(value)
+                return safe_error_message(value, api_key)
+        if response.status_code < 400:
+            return "None"
+    return safe_error_message(getattr(response, "text", ""), api_key)
+
+
+def is_rate_limit(status_code, message):
+    """Recognize HTTP and provider-message rate limits."""
+    text = message.lower()
+    return status_code == 429 or "rate limit" in text or "too many requests" in text
+
+
+def get_gnews_response(parameters, api_key):
+    """Make a request, retrying one rate-limited attempt after two seconds."""
+    for attempt in range(2):
+        try:
+            response = requests.get(
+                GNEWS_SEARCH_URL,
+                params={**parameters, "apikey": api_key},
+                timeout=5,
+            )
+        except requests.RequestException as error:
+            message = safe_error_message(str(error), api_key)
+            logger.error("GNews attempt %s: HTTP status unavailable; error: %s", attempt + 1, message)
+            raise NewsSourceError(
+                f"The news service request failed ({type(error).__name__}). {message} Please try again in a minute."
+            ) from None
+
+        provider_message = response_error_message(response, api_key)
+        rate_limited = is_rate_limit(response.status_code, provider_message)
+        error_message = provider_message if response.status_code >= 400 or rate_limited else "None"
+        logger.warning("GNews attempt %s: HTTP %s; error: %s", attempt + 1, response.status_code, error_message)
+
+        if rate_limited and attempt == 0:
+            time.sleep(2)
+            continue
+        if response.status_code >= 400 or rate_limited:
+            raise NewsSourceError(
+                f"The news service returned an error (HTTP {response.status_code}). {provider_message} Please try again in a minute.",
+                status_code=response.status_code,
+            )
+        return response
+
+    raise NewsSourceError("The news service rate limit was reached. Please try again in a minute.")
 
 
 def is_indian_domain(domain):
@@ -49,7 +128,9 @@ def fetch_articles(query):
         "searched_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "article_limit": MAX_ARTICLES,
     }
-    if not api_key or not cleaned_query:
+    if not api_key:
+        raise NewsSourceError("The news service is not configured because GNEWS_API_KEY is missing.")
+    if not cleaned_query:
         return {
             "articles": [],
             "search_details": details,
@@ -65,6 +146,8 @@ def fetch_articles(query):
     used_window = None
 
     for index, (window_label, duration) in enumerate(windows):
+        if index:
+            time.sleep(1.2)
         time_from = (now - duration).isoformat(timespec="seconds").replace("+00:00", "Z")
         parameters = {
             "q": cleaned_query,
@@ -74,12 +157,7 @@ def fetch_articles(query):
             "max": 10,
             "sortby": "relevance",
         }
-        response = requests.get(
-            GNEWS_SEARCH_URL,
-            params={**parameters, "apikey": api_key},
-            timeout=5,
-        )
-        response.raise_for_status()
+        response = get_gnews_response(parameters, api_key)
         raw_response = response.json()
         normalized = []
 

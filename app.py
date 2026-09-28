@@ -13,7 +13,7 @@ from flask import Flask, jsonify, render_template, request
 import tldextract
 
 from config import MAX_ARTICLES
-from news_source import fetch_articles, is_indian_domain
+from news_source import NewsSourceError, fetch_articles, is_indian_domain
 
 app = Flask(__name__)
 
@@ -331,8 +331,12 @@ def analyse():
 
     try:
         result = fetch_articles(query)
+    except NewsSourceError as error:
+        return jsonify({"message": str(error)}), 502
     except (requests.RequestException, ValueError):
-        result = {"articles": [], "search_details": None, "raw_response": {}}
+        return jsonify({
+            "message": "The news service returned an invalid response. Please try again in a minute."
+        }), 502
 
     if not result["articles"]:
         return jsonify({"message": "No articles found. Try 2-3 short keywords. The free news plan may also delay articles by up to 12 hours."}), 404
